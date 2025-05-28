@@ -1,3 +1,6 @@
+const GIFT_VARIANT_ID = 55987399197056;
+let giftisAdded = false;
+
 document.addEventListener('DOMContentLoaded', () => {
   // Récupère les infos du panier via l'API AJAX de Shopify
   async function fetchCart() {
@@ -11,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!cart) return;
     console.log(cart);
     updatePromoMessage(cart);
+    await addGift(cart);
   }
 
   // Créé le container dans le Drawer
@@ -44,6 +48,29 @@ document.addEventListener('DOMContentLoaded', () => {
       promoContainer.textContent = `🎁 Plus que ${(100 - total).toFixed(2)} € pour recevoir un cadeau offert.`;
     } else {
       promoContainer.textContent = `🎉 Félicitations, un cadeau vous a été ajouté !`;
+    }
+  }
+
+  // Vérifie si le cadeau est dans le panier
+  function giftIsInCart(cart) {
+    const present = cart.items.some((item) => item.variant_id === GIFT_VARIANT_ID);
+    if (!present) giftJustAdded = false;
+    return present;
+  }
+
+  // Ajoute le cadeau
+  async function addGift(cart) {
+    if (cart.total_price >= 10000 && !giftIsInCart(cart) && !giftisAdded) {
+      console.log('Le cadeau va être ajouté au panier');
+
+      await fetch('/cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: GIFT_VARIANT_ID, quantity: 1 }),
+      });
+
+      giftJustAdded = true;
+      await updateCartDrawer(); // met à jour les messages promo
     }
   }
 
