@@ -95,6 +95,8 @@ Suivre l'URL de prévisualisation générée.
 
 - Commits fréquents et explicites
 
+- Workflow de vérification à chaque push ou pull request sur main
+
 ---
 
 ## Test en local
