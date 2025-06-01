@@ -1,3 +1,21 @@
+/* Masquer le bouton - pour le produit cadeau */
+.gift-product button[name="minus"],
+.gift-product button[name="plus"] {
+  display: none !important;
+}
+
+/* Verrouiller le champ quantité visuellement */
+.gift-product input[data-quantity-variant-id="55987399197056"] {
+  pointer-events: none;
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Supprimer le bouton Supprimer */
+button.cart-remove-button[data-variant-id="55987399197056"] {
+  display: none !important;
+}
+
 .drawer {
   position: fixed;
   z-index: 1000;
