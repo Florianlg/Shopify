@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePromoMessage(cart);
     await addGift(cart);
     await removeGift(cart);
+    lockGift();
   }
 
   // Créé le container dans le Drawer
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     promoMessage.style.width = '100%';
     promoMessage.style.fontWeight = 'bold';
     promoMessage.style.textAlign = 'center';
-    promoMessage.textContent = 'Attention promotion !';
+    // promoMessage.textContent = 'Attention promotion !';
     drawerHeader.insertBefore(promoMessage, drawerHeader.lastChild);
   }
 
@@ -44,18 +45,18 @@ document.addEventListener('DOMContentLoaded', () => {
     promoContainer.innerHTML = '';
 
     if (total < 50) {
-      promoContainer.textContent = `🚚 Plus que ${(50 - total).toFixed(2)} € pour la livraison gratuite.`;
+      promoContainer.textContent = `Plus que ${(50 - total).toFixed(2)} € pour la livraison gratuite.`;
     } else if (total < 100) {
-      promoContainer.textContent = `🎁 Plus que ${(100 - total).toFixed(2)} € pour recevoir un cadeau offert.`;
+      promoContainer.textContent = `Plus que ${(100 - total).toFixed(2)} € pour recevoir un cadeau offert.`;
     } else {
-      promoContainer.textContent = `🎉 Félicitations, un cadeau vous a été ajouté !`;
+      promoContainer.textContent = `Félicitations, un cadeau vous a été ajouté !`;
     }
   }
 
   // Vérifie si le cadeau est dans le panier
   function giftIsInCart(cart) {
     const present = cart.items.some((item) => item.variant_id === GIFT_VARIANT_ID);
-    if (!present) giftJustAdded = false;
+    if (!present) giftisAdded = false;
     return present;
   }
 
@@ -70,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ id: GIFT_VARIANT_ID, quantity: 1 }),
       });
 
-      giftJustAdded = true;
+      giftisAdded = true;
       await new Promise((resolve) => setTimeout(resolve, 500));
       await refreshDrawerWithLatestCart();
     }
@@ -116,6 +117,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
       await refreshDrawerWithLatestCart();
     }
+  }
+
+  function lockGift() {
+    const giftInput = document.querySelector(`input[data-quantity-variant-id="${GIFT_VARIANT_ID}"]`);
+    if (!giftInput) return;
+
+    // Ajoute une classe spéciale au <td> du produit cadeau
+    const td = giftInput.closest('td.cart-item__quantity');
+    if (td) {
+      td.classList.add('gift-product');
+    }
+
+    // Verrouillage visuel
+    giftInput.setAttribute('readonly', true);
+    giftInput.style.cursor = 'not-allowed';
+    giftInput.style.backgroundColor = '#f5f5f5';
+
+    // Supprimer le bouton Supprimer
+    const removeButton = giftInput.closest('.cart-item')?.querySelector('.cart-remove-button');
+    if (removeButton) removeButton.remove();
   }
 
   // Événement Shopify au refresh du cart
