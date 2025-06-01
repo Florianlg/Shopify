@@ -1,20 +1,25 @@
 # Test Développeur E-commerce Shopify
 
+## Objectif
+
+Projet réalisé dans le cadre d’un test technique visant à démontrer la maîtrise de Shopify CLI, du thème Dawn, de la personnalisation du panier avec le drawer, de l’API Shopify, et de bonnes pratiques de versioning GitHub.
+
 ## Installation et configuration de l’environnement local
 
 ### Prérequis
 
-- Node.js v16 minimum : [https://nodejs.org/](https://nodejs.org/)
-- Shopify CLI : [https://shopify.dev/docs/themes/tools/cli/installation](https://shopify.dev/docs/themes/tools/cli/installation)
-- Git : [https://git-scm.com/](https://git-scm.com/)
+- Node.js v16
+- Shopify CLI
+- Git
 - Une boutique Shopify
 
-### 🔧 Installation
+### Installation
 
 1. Cloner le dépôt Git :
 
 ```bash
 git clone https://github.com/Florianlg/Shopify.git
+cd Shopify
 ```
 
 2. Se connecter à la boutique Shopify :
@@ -82,10 +87,13 @@ Suivre l'URL de prévisualisation générée.
 
 ---
 
-## Gestion de version Git
+## Bonnes pratiques
 
-- Branche principale : `main`
-- Branche fonctionnelle : `feature/exo1-cart-promo`
+- Commentaires de code clairs pour expliquer les blocs de logique
+
+- Branches dédiées pour chaque fonctionnalité (feature/exo1-cart-promo)
+
+- Commits fréquents et explicites
 
 ---
 
@@ -95,5 +103,13 @@ Suivre l'URL de prévisualisation générée.
 2. Ajouter ou retirer des produits depuis la boutique
 3. Ouvrir le drawer panier : les messages s’affichent dynamiquement
 4. Tester les seuils : vérifier apparition/disparition du cadeau et des messages
+5. Vérifier que les paramètres activent le Drawer pour le cart.
+
+---
+
+## Liens
+
+- [Exercice 1](./documentations/Exo%201/README.md)
+- [Exercice 2](./documentations/Exo%202/Flow_Configuration.md)
 
 ---
