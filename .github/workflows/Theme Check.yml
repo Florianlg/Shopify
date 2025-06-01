@@ -1,0 +1,26 @@
+name: Shopify Theme Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  theme-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cloner le dépôt
+        uses: actions/checkout@v2
+
+      - name: Installer Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+
+      - name: Installer theme-check
+        run: gem install theme-check
+
+      - name: Lancer theme-check
+        run: theme-check
