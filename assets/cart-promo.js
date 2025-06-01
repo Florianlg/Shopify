@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log(cart);
     updatePromoMessage(cart);
     await addGift(cart);
+    await removeGift(cart);
   }
 
   // Créé le container dans le Drawer
@@ -70,7 +71,50 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       giftJustAdded = true;
-      await updateCartDrawer(); // met à jour les messages promo
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await refreshDrawerWithLatestCart();
+    }
+  }
+
+  // MAJ du Drawer avec renderContents()
+  async function refreshDrawerWithLatestCart() {
+    //Appelle la page courante mais Shopify retourne seulement cart-drawer et cart-icon-bubble
+    const res = await fetch(`${window.location.pathname}?sections=cart-drawer`);
+    const sections = await res.json();
+
+    const cartDrawerElement = document.querySelector('cart-drawer');
+    //Vérification si cart-drawer existe et renderContents()
+    if (!cartDrawerElement?.renderContents) {
+      console.warn('cart-drawer introuvable ou renderContents indisponible');
+      return;
+    }
+
+    //Utilise la méthode renderContents() pour mettre à jour cart-drawer et cart-icon-bubble
+    cartDrawerElement.renderContents({
+      sections: {
+        'cart-drawer': sections['cart-drawer'],
+      },
+    });
+  }
+
+  // Récupère la key unique du produit cadeau dans le panier
+  function getGiftKey(cart) {
+    const giftItem = cart.items.find((item) => item.variant_id === GIFT_VARIANT_ID);
+    return giftItem?.key;
+  }
+
+  // Supprime le cadeau
+  async function removeGift(cart) {
+    if (cart.total_price < 10000 && giftIsInCart(cart)) {
+      console.log('Le cadeau va être retiré du panier');
+
+      await fetch('/cart/change.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: getGiftKey(cart), quantity: 0 }),
+      });
+
+      await refreshDrawerWithLatestCart();
     }
   }
 
