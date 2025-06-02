@@ -7,6 +7,15 @@ ignore:
 
 MatchingTranslations:
   enabled: false
+
 TemplateLength:
   enabled: false
 
+UnknownFilter:
+  enabled: false
+
+NestedSnippet:
+  enabled: warning
+
+LiquidTag:
+  enabled: warning
