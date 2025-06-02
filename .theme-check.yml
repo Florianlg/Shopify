@@ -1,4 +1,12 @@
+ignore:
+  - "documentations/Exo\ 4/price.liquid"
+  - "documentations/Exo\ 4/main-cart-items.liquid"
+  - "documentations/Exo\ 4/cart-drawer.liquid"
+  - "documentations/Exo\ 1/cart-promo.js"
+  - "documentations/Exo\ 1/theme.liquid"
+
 MatchingTranslations:
   enabled: false
 TemplateLength:
   enabled: false
+
