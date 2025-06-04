@@ -1457,11 +1457,22 @@
   "settings": [
     {
       "type": "text",
+      "id": "promo_badge_label",
+      "label": "Texte du badge",
+      "default": "Soldes"
+    },
+    {
+      "type": "range",
       "id": "promo_discount_percent",
-      "label": "Pourcentage de remise sur 'promotions'",
-      "default": "10"
+      "label": "Réduction (en %)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 10
     }
   ]
 }
+
 
 ]

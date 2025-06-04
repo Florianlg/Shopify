@@ -1,0 +1,44 @@
+{% comment %}
+  Snippet promo-price.liquid
+  Affiche le prix barré + prix remisé + badge promo si le produit appartient à "Promotions"
+  Paramètres requis :
+  - product
+  - promo_discount_percent
+  - promo_badge_label (optionnel, fallback 'Soldes')
+{% endcomment %}
+
+{% comment %} récupérée lors de l'appel du snippet  {% endcomment %}
+{%- assign discount_percent = promo_discount_percent | plus: 0 -%}
+{%- assign badge_text = promo_badge_label | default: 'Soldes' -%}
+
+{% comment %} Verification si produit dans la collection {% endcomment %}
+{%- assign promo_collection = collections.promotions -%}
+{%- assign is_promo = false -%}
+{%- for promo_product in promo_collection.products -%}
+  {%- if promo_product.id == product.id -%}
+    {%- assign is_promo = true -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{% if is_promo %}
+  {% comment %} Prix de base {% endcomment %}
+  {% assign original_price = product.price %}
+  {% comment %} Montant de la remise {% endcomment %}
+  {% assign discount_value = original_price | times: discount_percent | divided_by: 100.0 %}
+  {% comment %} Prix final {% endcomment %}
+  {% assign discounted_price = original_price | minus: discount_value %}
+
+  {% comment %} bloc d'affichage {% endcomment %}
+  <div class="promo-block">
+    <div class="promo-block__prices">
+      <s class="promo-block__original">{{ original_price | money }}</s>
+      <strong class="promo-block__final">{{ discounted_price | money }}</strong>
+    </div>
+    <span class="badge badge--promo" aria-label="Promotion : {{ badge_text }}">
+      {{ badge_text }}
+    </span>
+  </div>
+{% else %}
+  {% comment %} sinon on affiche le prix inital {% endcomment %}
+  <span class="price">{{ product.price | money }}</span>
+{% endif %}

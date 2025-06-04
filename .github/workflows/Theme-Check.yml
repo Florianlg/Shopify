@@ -1,26 +1,34 @@
+# Nom du worklow
 name: Shopify Theme Check
 
+# Déclencheurs
 on:
+  # Push sur main
   push:
     branches: [main]
+  # A chaque pull request
   pull_request:
     branches: [main]
 
+# Définitions des taches
 jobs:
   theme-check:
     runs-on: ubuntu-latest
 
     steps:
+      # Clone le dépot sur la VM action officielle
       - name: Cloner le dépôt
         uses: actions/checkout@v2
 
+      # Theme check est écrit en ruby
       - name: Installer Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.2
 
+      # Install de them-check
       - name: Installer theme-check
         run: gem install theme-check
-
+      # Run de THeme-check
       - name: Lancer theme-check
         run: theme-check

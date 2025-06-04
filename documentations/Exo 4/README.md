@@ -1,138 +1,181 @@
-# 🎯 Documentation Technique : Affichage dynamique des remises - Shopify
+# Exercice 4 – Remise automatique de 10 %
 
-## ✅ Contexte
+## Contexte
 
-Avec le thème Dawn, afficher dynamiquement une remise auto de 10 % pour tous les produits appartenant à la collection _Promotions_.
+Les produits appartenant à la collection `Promotions` ont une une remise automatique
+L’objectif est d’afficher les prix barrés, les prix remisés et un badge de promotion sur :
 
-Elle doit être visible alors :
+- Les fiches produits
+- La page de collection Promotions
+- Le panier
+- Le cart drawer
 
-- Sur la fiche produit
-- Sur les pages de collection
-- Dans le panier classique (`main-cart-items`)
-- Dans le cart drawer (`cart-drawer`)
+La remise est définie par une **promotion automatique dans l’admin Shopify**. Le système s’adapte automatiquement si le pourcentage ou le nom de la promo change.
 
 ---
 
-## 1. Détection de la collection et application de la remise
+## Objectif fonctionnel
 
-- Une fois la collection créée dans l'admin, vérifier qu'elle porte bien le handle (URL) `promotions`.
-- Le taux de remise sera stocké dans le `settings_schema.json` via :
+Pour tous les produits de la collection `Promotions` :
+
+- Affichage du **prix barré** et du **prix remisé**
+- Affichage d’un **badge dynamique** modifiable dans les paramètres
+- Affichage d’un **total estimé après remise** dans le panier et le cart drawer
+- NB : Le montant réel n'a pas pu être traité, il reste géré par Shopify au moment du checkout
+
+---
+
+## Paramètres configurables dans l'admin (`settings_schema.json`)
 
 ```json
 {
   "type": "text",
+  "id": "promo_badge_label",
+  "label": "Texte du badge",
+  "default": "Soldes"
+},
+{
+  "type": "range",
   "id": "promo_discount_percent",
-  "label": "Pourcentage de remise sur 'promotions'",
-  "default": "10"
+  "label": "Remise automatique (%)",
+  "min": 0,
+  "max": 100,
+  "default": 10,
+  "step": 1
 }
 ```
 
-- Les fichiers modifiés sont :
-  - `price.liquid`,
-  - `main-cart-items.liquid`,
-  - `cart-drawer.liquid`,
-- On vient ensuite vérifier si le produit est concerné par la réduction grâce à `collections.promotions.products` pour vérifi s'il est concerné.
-- Le prix remisé est calculé avec :
+## Mise en place technqique
 
-```liquid
-{% assign discount_percent = settings.promo_discount_percent | plus: 0 %}
-{% assign discount_multiplier = discount_percent | divided_by: 100.0 %}
-{% assign discount_amount = price | times: discount_multiplier %}
-{% assign discounted_price = price | minus: discount_amount %}
-```
+### Fichiers modifiés
 
----
-
-## 2. Affichage du prix barré + prix remisé
-
-### 2.1 Sur la fiche produit et les pages de collection (`price.liquid`)
-
-- On barre le prix d'origine avec `text-decoration: line-through`
-- Le prix remisé est affiché juste après
-- Le badge affiche automatiquement la remise `-10%` par défaut.
-- Le bloc Liquid complet :
-
-```liquid
-<span class="price-item price-item--regular" style="text-decoration: line-through;">
-  {{ money_price }}
-</span>
-<span class="price-item price-item--sale">
-  {{ discounted_price | money }}
-</span>
-<span class="badge">-{{ discount_percent }}%</span>
-```
-
----
-
-## 3. Mise à jour dynamique dans le panier
-
-### 3.1 Dans `main-cart-items.liquid`
-
-- Affichage du prix barré (original)
-- Affichage du prix remisé avec `final_price` si `line_level_discount_allocations` n'est pas vide
-- On cache le badge par défaut `.discounts list-unstyled`
-- Possible d'affichaer le nom dynamique de la remise avec :
-
-```liquid
-<span class="badge">
-  {{ item.line_level_discount_allocations[0].discount_application.title }}
-</span>
-```
-
-### 3.2 Dans `cart-drawer.liquid`
-
-Même logique pour le drawer : :
-
-```liquid
-{% if item.line_level_discount_allocations.size > 0 %}
-  <s>{{ item.original_price | money }}</s>
-  <strong>{{ item.final_price | money }}</strong>
-  <span class="badge">{{ item.line_level_discount_allocations[0].discount_application.title }}</span>
-{% endif %}
-```
-
-> La promotion est gérée dans l'admin Shopify (Remise automatique sur la collection `Promotions`).
-
----
-
-## 4. Performance et maintenabilité
-
-- Le code est commenté
-- Le calcul Liquid est réalisé **dans le template** pour une meilleure performance
-- Le badge est dynamique `promo_collection.title`.
-- Le badge se met à jour automatiquement si le nom change.
-
----
-
-## Instructions de test
-
-1. **Vérifier la collection "Promotions"** existe et contient des produits.
-2. **Créer une remise automatique** depuis l’admin Shopify :
-
-   - Avec pour nom : "Soldes"
-   - Une remise de : 10 %
-   - qui cible la collection "Promotions"
-
-3. Sur une fiche produit de cette collection :
-
-   - Vérifier que le prix barré et le prix remisé s’affichent.
-   - Vérifier que le badge affiche bien le nom de la promotion (Soldes).
-
-4. Ajouter le produit au panier :
-
-   - Le prix original doit être barré.
-   - Le prix remisé doit être affiché.
-   - Le label de la promo doit s’afficher.
-
-5. Changer le nom ou le pourcentage de la promotion :
-
-   - L’interface s’adapte automatiquement.
-
----
-
-## Fichiers modifiés
-
-- `price.liquid`
 - `main-cart-items.liquid`
 - `cart-drawer.liquid`
+- `price.liquid`
+- `main-cart-footer.liquid`
 - `settings_schema.json`
+- `theme.liquid`
+- `cart-promo.js`
+
+### Fichiers créés
+
+- `promo-line-total.liquid`
+- `promo-cart-totals/liquid`
+- `promo-price.liquid`
+
+### `settings_schema.json`
+
+Création d'un onglet dans l'admin avec la possibilité de modifier le pourcentage de remise et le titre de la promotion
+
+### `promo-price.liquid`
+
+Création d'un snippet pour afficher le prix barré + le prix remisé + le badge promo si le produit appartient à "Promotions"
+Plusieurs paramètres requis :
+
+- product
+- promo_discount_percent (optionnel, fallback 10)
+- promo_badge_label (optionnel, fallback 'Soldes')
+
+### `promo-line-total.liquid`
+
+Création d'un snippet pour afficher le total remisé par ligne de panier si le produit appartient à "promotions"
+Requiert :
+
+- item : l'objet ligne du panier (cart item)
+- promo_discount_percent : (optionnel) transmis depuis settings
+
+### `promo-cart-totals.liquid`
+
+Création d'un snippet pour afficher le total du panier
+
+### `main-cart-items.liquid`
+
+- Appel du snippet promo-price pour l'affichage des prix
+- Appel 2x du snippet promo-line-total pour afficher le total de la ligne du panier
+- Cache l'ancien badge
+
+### `cart-drawer.liquid`
+
+- Appel du snippet promo-price pour l'affichage des prix
+- Appel du snippet promo-line-total pour afficher le total de la ligne du panier
+- Appel du snippet promo-cart-totals pour affihcer le total du panier
+- Liaison avec le JS, ajout en attribut du variant-id et de data-promo
+
+### `price.liquid`
+
+- Appel 2x du snippet promo-price pour l'affichage des prix
+
+### `main-cart-footer.liquid`
+
+- Appel du snippet promo-cart-totals pour affihcer le total du panier
+
+### `cart-promo.js`
+
+- On lit la remise dynamiquement avec `Number(document.documentElement.dataset.promoDiscount) || 10`
+- Création d'une fonction `getCartTotal(cart)` qui boucle sur chaque item du panier et calcul le total si promo ou non.
+- On utilise cette fonction pour **Ajouter le cadeau**, **Supprimer le cadeau**, **Ajuster les messages**
+
+### `theme.liquid`
+
+- Modification de la balise HTML (ajout d'un attribut data-promo-discount pour la récupérer en JS)
+
+---
+
+## Test local
+
+### 1. Configuration dans l’admin
+
+1. Créer une collection avec le handle (URL) : `promotions`
+2. Ajouter des produits liés à cette collection
+3. Créer une **promotion automatique** de -10% dans l’admin sur cette collection
+   - Nom de la promo : Soldes
+
+### 2. Ajout et création des fichiers fournis
+
+### REmplacer les fichiers existant :
+
+- `main-cart-items.liquid`
+- `cart-drawer.liquid`
+- `price.liquid`
+- `main-cart-footer.liquid`
+- `settings_schema.json`
+- `theme.liquid`
+- `cart-promo.js`
+
+### Créer les fichiers dans `snippet/`
+
+- `promo-line-total.liquid`
+- `promo-cart-totals/liquid`
+- `promo-price.liquid`
+
+### 3. Lancement de l'environnement de développement
+
+- `shopify theme dev`
+
+### 4. Vérifications visuelles
+
+- Sur les fiches produits
+
+  - Affichage du prix barré
+  - Affichage du prix remisé
+  - Badge avec le texte dynamique (ex. « Soldes printemps »)
+
+- Sur les pages de collection
+
+  - Identique à la fiche produit
+
+- Dans le panier
+
+  - Ligne du produit remisé :
+
+    - Total remisé en fonction de la quantité
+    - Message affiché
+
+  - Total estimé après remise
+
+- Dans le cart drawer
+  - Idem que panier : prix remisé + total estimé dynamique
+
+```
+
+```

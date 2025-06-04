@@ -17,7 +17,10 @@
   }
 </style>
 
-<cart-drawer class="drawer{% if cart == empty %} is-empty{% endif %}">
+<cart-drawer
+  class="drawer{% if cart == empty %} is-empty{% endif %}"
+  data-id="cart-drawer"
+>
   <div id="CartDrawer" class="cart-drawer">
     <div id="CartDrawer-Overlay" class="cart-drawer__overlay"></div>
     <div
@@ -117,25 +120,23 @@
                   </thead>
 
                   <tbody role="rowgroup">
-                    {% comment %} Charge la promo avec URL promotions{% endcomment %}
-                    {% assign promo_collection = collections.promotions %}
-                    {% assign discount_percent = settings.promo_discount_percent | plus: 0 %}
-                    {% assign discount_rate = 100.0 | minus: discount_percent | divided_by: 100.0 %}
-
-                    {% comment %} Détecte les produits en promotion {% endcomment %}
                     {%- for item in cart.items -%}
-                      {% assign is_promo = false %}
-                      {% assign discount_percent = settings.promo_discount_percent | default: 10 | plus: 0 %}
-                      {% assign discount_multiplier = 1.0 | minus: discount_percent | divided_by: 100 %}
-                      {% assign discounted_price = item.original_price | times: discount_multiplier %}
-
-                      {% for promo_product in promo_collection.products %}
-                        {% if promo_product.id == item.product.id %}
-                          {% assign is_promo = true %}
+                      {% comment %} passe en attribut data-variant-id pour selectionner le bon tr + data-promo  {% endcomment %}
+                      <tr
+                        id="CartDrawer-Item-{{ item.index | plus: 1 }}"
+                        class="cart-item"
+                        role="row"
+                        data-variant-id="{{ item.variant.id }}"
+                        {% assign is_promo = false %}
+                        {% for promo_product in collections.promotions.products %}
+                          {% if promo_product.id == item.product.id %}
+                            {% assign is_promo = true %}
+                          {% endif %}
+                        {% endfor %}
+                        {% if is_promo %}
+                          data-promo="true"
                         {% endif %}
-                      {% endfor %}
-
-                      <tr id="CartDrawer-Item-{{ item.index | plus: 1 }}" class="cart-item" role="row">
+                      >
                         <td class="cart-item__media" role="cell" headers="CartDrawer-ColumnProductImage">
                           {% if item.image %}
                             {% comment %} Leave empty space due to a:empty CSS display: none rule {% endcomment %}
@@ -160,24 +161,12 @@
                             {{- item.product.title | escape -}}
                           </a>
 
-                          {% comment %} Vérifie si remise appliquée via l'admin Shopify {% endcomment %}
-                          {% if item.line_level_discount_allocations.size > 0 %}
-                            <div class="cart-item__discounted-prices">
-                              <s class="cart-item__old-price product-option">
-                                {{ item.original_price | money }}
-                              </s>
-                              <strong class="cart-item__final-price product-option">
-                                {{ item.final_price | money }}
-                              </strong>
-                              <span class="badge">
-                                {{ item.line_level_discount_allocations[0].discount_application.title }}
-                              </span>
-                            </div>
-                          {% else %}
-                            <div class="product-option">
-                              {{ item.original_price | money }}
-                            </div>
-                          {% endif %}
+                          {% comment %} retourne un ibj avec notamment .price utile {% endcomment %}
+                          {% render 'promo-price',
+                            product: item.product,
+                            promo_discount_percent: settings.promo_discount_percent,
+                            promo_badge_label: settings.promo_badge_label
+                          %}
 
                           {%- if item.product.has_only_default_variant == false
                             or item.properties.size != 0
@@ -223,39 +212,47 @@
                             <p class="product-option">{{ item.selling_plan_allocation.selling_plan.name }}</p>
                           {%- endif -%}
 
-                          <ul
-                            class="discounts list-unstyled"
-                            style="display: none;"
-                            role="list"
-                            aria-label="{{ 'customer.order.discount' | t }}"
-                          >
-                            {%- for discount in item.line_level_discount_allocations -%}
-                              <li class="discounts__discount">
-                                {{- 'icon-discount.svg' | inline_asset_content -}}
-                                {{ discount.discount_application.title }}
-                              </li>
-                            {%- endfor -%}
-                          </ul>
+                          {% comment %}
+                            <ul
+                              class="discounts list-unstyled"
+                              role="list"
+                              aria-label="{{ 'customer.order.discount' | t }}"
+                            >
+                              {%- for discount in item.line_level_discount_allocations -%}
+                                <li class="discounts__discount">
+                                  {{- 'icon-discount.svg' | inline_asset_content -}}
+                                  {{ discount.discount_application.title }}
+                                </li>
+                              {%- endfor -%}
+                            </ul>
+                          {% endcomment %}
                         </td>
 
                         <td class="cart-item__totals right" role="cell" headers="CartDrawer-ColumnTotal">
                           {%- render 'loading-spinner' -%}
                           <div class="cart-item__price-wrapper">
-                            {% comment %} Vérifie si remise appliquée via l'admin Shopify {% endcomment %}
-                            {% if item.line_level_discount_allocations.size > 0 %}
+                            {%- if item.original_line_price != item.final_line_price -%}
                               <div class="cart-item__discounted-prices">
-                                <s class="cart-item__old-price product-option">
-                                  {{ item.original_price | money }}
+                                <span class="visually-hidden">
+                                  {{ 'products.product.price.regular_price' | t }}
+                                </span>
+                                <s class="cart-item__old-price price price--end">
+                                  {{ item.original_line_price | money }}
                                 </s>
-                                <strong class="cart-item__final-price product-option">
-                                  {{ item.final_price | money }}
-                                </strong>
+                                <span class="visually-hidden">
+                                  {{ 'products.product.price.sale_price' | t }}
+                                </span>
+                                {% comment %} on transmet un objet item du panier pour vérifier son id + le param promo_discount_percent  {% endcomment %}
+                                {% render 'promo-line-total',
+                                  item: item,
+                                  promo_discount_percent: settings.promo_discount_percent
+                                %}
                               </div>
-                            {% else %}
-                              <div class="product-option">
-                                {{ item.original_price | money }}
-                              </div>
-                            {% endif %}
+                            {%- else -%}
+                              <span class="price price--end">
+                                {{ item.original_line_price | money }}
+                              </span>
+                            {%- endif -%}
 
                             {%- if item.variant.available and item.unit_price_measurement -%}
                               <div class="unit-price caption">
@@ -492,13 +489,7 @@
         <div class="cart-drawer__footer" {{ block.shopify_attributes }}>
           <div>
             {%- if cart.cart_level_discount_applications.size > 0 -%}
-              {% comment %} Cache l'ancien badge {% endcomment %}
-              <ul
-                class="discounts list-unstyled"
-                style="display: none;"
-                role="list"
-                aria-label="{{ 'customer.order.discount' | t }}"
-              >
+              <ul class="discounts list-unstyled" role="list" aria-label="{{ 'customer.order.discount' | t }}">
                 {%- for discount in cart.cart_level_discount_applications -%}
                   <li class="discounts__discount discounts__discount--end">
                     {{- 'icon-discount.svg' | inline_asset_content -}}
@@ -512,7 +503,7 @@
 
           <div class="totals" role="status">
             <h2 class="totals__total">{{ 'sections.cart.estimated_total' | t }}</h2>
-            <p class="totals__total-value">{{ cart.total_price | money_with_currency }}</p>
+            <p class="totals__total-value">{% render 'promo-cart-totals', replace_mode: true %}</p>
           </div>
 
           <small class="tax-note caption-large rte">

@@ -63,18 +63,20 @@ Payload reçu via Webhook :
 ### Logique de traitement dans l'application
 
 1. Appel à l’API Shopify pour récupérer l’`inventory_item_id` depuis le `product_id`.
-2. Appel à `GET /inventory_levels.json` pour récupérer la quantité disponible.
+   `GET /admin/api/2025-04/products/{product_id}/variants.json`
+
+2. Appel à `GET /admin/api/2025-04/inventory_levels.json?inventory_item_ids=celuirécupéré` pour récupérer la quantité disponible `available` et la `location_id`.
 3. Si :
-   - `available >= 1` → décrémenter le stock via `inventory_levels/adjust`.
+   - `available >= 1` → décrémenter le stock via `POST /admin/api/2025-04/inventory_levels/adjust.json` avec les paramètres : `inventory_item_id` `location_id` `available_adjustment`
    - `available < 5` → envoyer une **alerte email**.
-   - `available == 0` → mettre à jour le metafield `gift_available` à `false`.
+   - `available == 0` → mettre à jour le metafield `value` à `false` avec `PUT /admin/api/2025-04/products/{product_id}/metafields/{metafield_id}.json`. Le front lira la valeur du metafield et masquera alors les messages
 
 ---
 
 ## 4. Intégration avec la logique d’ajout automatique (exercice 1)
 
-1. Le client ajoute des produits au panier.
-2. Si le panier atteint 100€, le script JS du cart drawer ajoute automatiquement le produit cadeau via AJAX.
+1. Le client ajoute des produits au panier. (le message du cadeau apparait en fonction du metafiled)
+2. Si le panier atteint 100€, le script JS du cart drawer ajoute automatiquement le produit cadeau via AJAX si celui-ci est disponible
 3. Le client passe commande.
 4. Shopify Flow détecte la commande, vérifie la présence du produit cadeau, et envoie les données à l’application.
 5. L'application reçoit la requête et va devoir récupérer l'`inventory_item_id` qui va nous permettre de consulter et modifier le stock:
@@ -118,7 +120,7 @@ Payload reçu via Webhook :
 
 ## 5. Gestion des erreurs et scénarios particuliers
 
-- Ne pas décrémenter le stock, le stock est déjà à 0
+- Ne pas décrémenter le stock si le stock est déjà à 0
 - Alerte interne :
   - **Email d’alerte**
   - Décision de **retirer manuellement** le produit de la commande, **envoyer un autre cadeau** à la place ou **contacter le client**.
@@ -158,8 +160,6 @@ Payload reçu via Webhook :
     {
 
     "metafield": {
-    "namespace": "custom",
-    "key": "gift_available",
     "value": "false",
     "type": "boolean"
     }
@@ -169,7 +169,7 @@ Payload reçu via Webhook :
   - Ce champ permettra alors au front de savoir si le produit est disponible ou non
     - A chaque affichage du paniern le script :
       1. Interroge le **Storefront** pour lire le metafield :
-      - Si **gift_available = false**, le front cache le message (“Plus que 100 € pour un cadeau offert”), **n’ajoute plus** le produit cadeau au panier, pourra afficher un message alternatif (“Cadeau temporairement indisponible”).
+      - Si **value = false**, le front cache le message (“Plus que 100 € pour un cadeau offert”), **n’ajoute plus** le produit cadeau au panier, pourra afficher un message alternatif (“Cadeau temporairement indisponible”).
 
 ---
 
