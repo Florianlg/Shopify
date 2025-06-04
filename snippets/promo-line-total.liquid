@@ -1,0 +1,43 @@
+{% comment %}
+  Snippet : promo-line-total.liquid
+  Affiche le total remisé par ligne de panier si le produit appartient à "promotions"
+  Paramètres requis
+  - item : l'objet ligne du panier (cart item)
+  - promo_discount_percent : (optionnel) transmis depuis settings
+{% endcomment %}
+
+{% comment %} récupère la collection promotions {% endcomment %}
+{% assign promo_collection = collections.promotions %}
+{% comment %} is_promo = true -> produit en promo {% endcomment %}
+{% assign is_promo = false %}
+{% comment %} récupère le % de remise défini dans l'admin du theme, puis converion en entier {% endcomment %}
+{% assign discount_percent = promo_discount_percent | plus: 0 %}
+
+{% comment %} on compare l'id des produits dans le panier avec ceux en promo {% endcomment %}
+{% for promo_product in promo_collection.products %}
+  {% if promo_product.id == item.product.id %}
+    {% assign is_promo = true %}
+  {% endif %}
+{% endfor %}
+
+{% comment %} Si produit en promo {% endcomment %}
+{% if is_promo %}
+  {% comment %} Montant remisé {% endcomment %}
+  {% assign discount_amount = item.original_line_price | times: discount_percent | divided_by: 100.0 %}
+  {% comment %} total après remise {% endcomment %}
+  {% assign discounted_total = item.original_line_price | minus: discount_amount %}
+
+  {% comment %} on affiche ce total {% endcomment %}
+  <span class="price price--end">
+    {{ discounted_total | money }}
+  </span>
+  {% comment %} le badge avec le % appliqué {% endcomment %}
+  <div class="price--badge">
+    <small class="promo-discount-message">-{{ discount_percent }}% appliqués</small>
+  </div>
+{% else %}
+  {% comment %} on affiche le prix initial {% endcomment %}
+  <span class="price price--end">
+    {{ item.original_line_price | money }}
+  </span>
+{% endif %}

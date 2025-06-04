@@ -11,9 +11,11 @@ MatchingTranslations:
 TemplateLength:
   enabled: false
 
+# Désactive la vérification des filtres
 UnknownFilter:
   enabled: false
 
+# Mise en warning des snippets trop imbriqués + syntaxe liquid
 NestedSnippet:
   enabled: warning
 

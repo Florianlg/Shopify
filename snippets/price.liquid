@@ -12,7 +12,6 @@
   Usage:
   {% render 'price', product: product %}
 {% endcomment %}
-
 {%- liquid
   if use_variant
     assign target = product.selected_or_first_available_variant
@@ -39,18 +38,6 @@
   if target == product and product.price_varies
     assign money_price = 'products.product.price.from_price_html' | t: price: money_price
   endif
-
-  # Détection de la collection Promotions
-  # promo_collection : charge la collection promotions
-  # is_promo : indique si le produit est dans cette collection.
-  # Boucle sur les produits de la collection, check sur id du produit affiché
-  assign promo_collection = collections.promotions
-  assign is_promo = false
-  for promo_product in promo_collection.products
-    if promo_product.id == product.id
-      assign is_promo = true
-    endif
-  endfor
 -%}
 
 {%- unless target == null and placeholder == null -%}
@@ -66,10 +53,15 @@
     "
   >
     <div class="price__container">
+      {%- comment -%}
+        Explanation of description list:
+          - div.price__regular: Displayed when there are no variants on sale
+          - div.price__sale: Displayed when a variant is a sale
+      {%- endcomment -%}
       <div class="price__regular">
         {%- if product.quantity_price_breaks_configured? -%}
           {%- if show_compare_at_price and compare_at_price -%}
-            {%- unless product.price_varies == false and product.compare_at_price_varies -%}
+            {%- unless product.price_varies == false and product.compare_at_price_varies %}
               <span class="visually-hidden visually-hidden--inline">
                 {{- 'products.product.price.regular_price' | t -}}
               </span>
@@ -93,33 +85,21 @@
           </span>
         {%- else -%}
           <span class="visually-hidden visually-hidden--inline">{{ 'products.product.price.regular_price' | t }}</span>
-
-          {%- comment -%}
-            Promo de -10% appliquée pour les produits de la collection "Promotions".
-            On affiche le prix d'origine barré + le prix remisé + le label dynamique.
-          {%- endcomment -%}
-          {%- if is_promo -%}
-            {%- assign discount_percent = settings.promo_discount_percent | default: 10 | plus: 0 -%}
-            {%- assign discount_multiplier = discount_percent | divided_by: 100.0 -%}
-            {%- assign discount_amount = price | times: discount_multiplier -%}
-            {%- assign discounted_price = price | minus: discount_amount -%}
-
-            <span class="price-item price-item--regular" style="text-decoration: line-through;">
+          {% if product %}
+            {% render 'promo-price',
+              product: product,
+              promo_discount_percent: settings.promo_discount_percent,
+              promo_badge_label: settings.promo_badge_label
+            %}
+          {% else %}
+            <span class="price-item price-item--regular">
               {{ money_price }}
             </span>
-            <span class="price-item price-item--sale">
-              {{ discounted_price | money }}
-            </span>
-            <span class="badge">-{{ discount_percent }}%</span>
-
-          {%- else -%}
-            <span class="price-item price-item--regular">{{ money_price }}</span>
-          {%- endif -%}
+          {% endif %}
         {%- endif -%}
       </div>
-
       <div class="price__sale">
-        {%- unless product.price_varies == false and product.compare_at_price_varies -%}
+        {%- unless product.price_varies == false and product.compare_at_price_varies %}
           <span class="visually-hidden visually-hidden--inline">{{ 'products.product.price.regular_price' | t }}</span>
           <span>
             <s class="price-item price-item--regular">
@@ -132,11 +112,20 @@
           </span>
         {%- endunless -%}
         <span class="visually-hidden visually-hidden--inline">{{ 'products.product.price.sale_price' | t }}</span>
-        <span class="price-item price-item--sale price-item--last">
-          {{ money_price }}
-        </span>
-      </div>
 
+        {% if product %}
+          {% render 'promo-price',
+            product: product,
+            promo_discount_percent: settings.promo_discount_percent,
+            promo_badge_label: settings.promo_badge_label
+          %}
+
+        {% else %}
+          <span class="price-item price-item--regular">
+            {{ money_price }}
+          </span>
+        {% endif %}
+      </div>
       <small class="unit-price caption{% if product.selected_or_first_available_variant.unit_price_measurement == nil %} hidden{% endif %}">
         <span class="visually-hidden">{{ 'products.product.price.unit_price' | t }}</span>
         <span class="price-item price-item--last">
@@ -152,14 +141,14 @@
         </span>
       </small>
     </div>
-
     {%- if show_badges -%}
       <span class="badge price__badge-sale color-{{ settings.sale_badge_color_scheme }}">
         {{ 'products.product.on_sale' | t }}
       </span>
+
       <span class="badge price__badge-sold-out color-{{ settings.sold_out_badge_color_scheme }}">
         {{ 'products.product.sold_out' | t }}
       </span>
     {%- endif -%}
   </div>
-{%- endunless -%}
+{% endunless %}

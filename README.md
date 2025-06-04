@@ -9,7 +9,7 @@ Projet réalisé dans le cadre d’un test technique visant à démontrer la ma�
 ### Prérequis
 
 - Node.js v16
-- Shopify CLI
+- Shopify CLI (dépend de Node)
 - Git
 - Une boutique Shopify
 
